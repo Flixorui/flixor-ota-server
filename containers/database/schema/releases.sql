@@ -6,5 +6,10 @@ CREATE TABLE IF NOT EXISTS releases (
   commit_hash VARCHAR(255) NOT NULL,
   commit_message VARCHAR(255) NOT NULL,
   release_notes TEXT,
-  update_id VARCHAR(255)
+  update_id VARCHAR(255),
+  platforms VARCHAR(255)
 );
+
+-- Index for faster queries
+CREATE INDEX IF NOT EXISTS idx_releases_runtime_version ON releases(runtime_version);
+CREATE INDEX IF NOT EXISTS idx_releases_timestamp ON releases(timestamp DESC);

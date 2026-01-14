@@ -1,12 +1,13 @@
 # Multi-stage build for production
 FROM node:18-alpine AS builder
 
-# Set working directory
+# Install dependencies for native modules
+RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY .npmrc ./
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci --ignore-scripts
@@ -20,25 +21,32 @@ RUN npm run build
 # Production stage
 FROM node:18-alpine AS production
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY .npmrc ./
+# Don't run as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Install only production dependencies
-RUN npm ci --omit=dev --ignore-scripts
-
-# Copy built application from builder stage
-COPY --from=builder /app/.next ./.next
+# Copy standalone build
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# Create directory for local releases storage
+RUN mkdir -p /app/local-releases && chown nextjs:nodejs /app/local-releases
+
+# Set ownership
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
 
 # Expose port 3000
 EXPOSE 3000
 
-# Set environment to production
+# Set environment
 ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application using the standalone server
+CMD ["node", "server.js"]

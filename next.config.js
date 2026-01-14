@@ -1,10 +1,7 @@
 module.exports = {
   output: 'standalone',
-  // Increase API route limits to handle large bundle files
-  experimental: {
-    // Increase the default API route response size limit
-    serverComponentsExternalPackages: [],
-  },
+  // External packages that should not be bundled
+  serverExternalPackages: ['pg', 'adm-zip'],
   // Configure API routes
   async headers() {
     return [

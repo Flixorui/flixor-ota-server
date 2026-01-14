@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  ota-server:
+    build:
+      context: .
+      dockerfile: dockerfile
+    image: ghcr.io/flixorui/flixor-ota-server:latest
+    ports:
+      - '3000:3000'
+    environment:
+      - HOST=${HOST:-https://ota.flixor.xyz}
+      - NODE_ENV=production
+      # Storage - local filesystem with persistent volume
+      - BLOB_STORAGE_TYPE=local
+      # Database
+      - DB_TYPE=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-flixor}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_DB=${POSTGRES_DB:-flixor_ota}
+      - POSTGRES_SSL=false
+      # Security
+      - PRIVATE_KEY_BASE_64=${PRIVATE_KEY_BASE_64:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      - UPLOAD_KEY=${UPLOAD_KEY:?UPLOAD_KEY is required}
+    volumes:
+      - ota-releases:/app/local-releases
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-flixor}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_DB=${POSTGRES_DB:-flixor_ota}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./containers/database/schema:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flixor} -d ${POSTGRES_DB:-flixor_ota}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+    driver: local
+  ota-releases:
+    driver: local
