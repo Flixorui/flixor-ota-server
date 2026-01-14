@@ -2,7 +2,18 @@
 
 exports[`Upload API should handle file upload successfully 1`] = `
 Object {
+  "deployedVersions": Array [
+    "1.0.0",
+  ],
+  "failedVersions": Array [],
   "path": "updates/1.0.0/timestamp.zip",
+  "results": Array [
+    Object {
+      "path": "updates/1.0.0/timestamp.zip",
+      "runtimeVersion": "1.0.0",
+      "success": true,
+    },
+  ],
   "success": true,
 }
 `;

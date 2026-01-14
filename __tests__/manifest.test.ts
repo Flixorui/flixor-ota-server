@@ -196,9 +196,19 @@ describe('Manifest API', () => {
   });
 
   it('should handle rollback update successfully', async () => {
-    // Mock database
+    // Mock database with a valid release record
+    const mockRelease: Release = {
+      id: 'release-id',
+      runtimeVersion: '1.0.0',
+      path: 'path/to/update.zip',
+      timestamp: '2024-03-20T00:00:00Z',
+      commitHash: 'abc123',
+      commitMessage: 'Test commit',
+      updateId: 'rollback-update-id',
+    };
+
     const mockDatabase = {
-      getLatestReleaseRecordForRuntimeVersion: jest.fn().mockResolvedValue(null),
+      getLatestReleaseRecordForRuntimeVersion: jest.fn().mockResolvedValue(mockRelease),
     } as unknown as DatabaseInterface;
 
     (DatabaseFactory.getDatabase as jest.Mock).mockReturnValue(mockDatabase);
