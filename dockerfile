@@ -6,11 +6,12 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package.json only (not package-lock.json to avoid platform conflicts)
+COPY package.json ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci --ignore-scripts
+# Using npm install instead of npm ci to generate platform-appropriate lock file
+RUN npm install
 
 # Copy source code
 COPY . .
